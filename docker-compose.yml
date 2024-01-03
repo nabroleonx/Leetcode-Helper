@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  leetcode-helper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: leetcode-helper:latest
+    container_name: leetcode-helper-container
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+    network_mode: 'host'
