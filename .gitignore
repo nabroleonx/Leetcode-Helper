@@ -8,3 +8,7 @@ logs
 npm-debug.log*
 
 build
+
+# env
+venv
+**/venv/
