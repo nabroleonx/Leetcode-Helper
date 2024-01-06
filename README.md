@@ -70,3 +70,10 @@ The LeetCode Helper Bot should now be up and running, ready to assist you in you
 ## Usage
 
 Once the bot is running, open your Telegram app and open the bot you created. Start interacting with the bot by using the available commands to access daily challenges, track your progress, explore resources, and practice coding with ease.
+
+### TODO
+- [ ] Get solutions for questions
+- [ ] Automated notification for daily Leetcode challenge
+- [ ] Add roadmap
+- [ ] Pagination and filtering for questions and resources
+- [ ] Refactor
