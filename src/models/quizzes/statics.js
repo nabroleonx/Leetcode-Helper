@@ -1,16 +1,10 @@
-import Resource from "./index.js";
+import Quiz from "./index.js";
 
-export async function getResources(filter) {
-  const { limit, page, tag } = filter;
+export async function getQuizzes(filter) {
+  const { limit, page } = filter;
 
   try {
-    const resources = await Resource.aggregate([
-      {
-        $match: {
-          type: "file",
-          tags: tag,
-        },
-      },
+    const quizzes = await Quiz.aggregate([
       {
         $facet: {
           paginationInfo: [
@@ -34,7 +28,7 @@ export async function getResources(filter) {
               },
             },
           ],
-          resources: [
+          quizzes: [
             {
               $skip: (+page - 1) * +limit,
             },
@@ -54,13 +48,13 @@ export async function getResources(filter) {
         $project: {
           totalDocuments: { $ifNull: ["$paginationInfo.totalDocuments", 0] },
           totalPages: { $ifNull: ["$paginationInfo.totalPages", 0] },
-          resources: { $ifNull: ["$resources", []] },
+          quizzes: { $ifNull: ["$quizzes", []] },
         },
       },
     ]);
 
-    return resources[0];
+    return quizzes[0];
   } catch (error) {
-    console.error("Failed to fetch resources, " + error);
+    console.error("Failed to fetch quizzes, " + error);
   }
 }

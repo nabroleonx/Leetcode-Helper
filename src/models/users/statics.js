@@ -15,6 +15,10 @@ export async function getUserInfo(userId) {
 
     const leetcodeInfo = await leetcode.user(user.leetcode_username);
 
+    if (!leetcodeInfo.matchedUser) {
+      return "The username you set is incorrect. No user with that username found \n use /set_username to update it";
+    }
+
     const userInfo = `
 <b>Username:</b> <i>${leetcodeInfo.matchedUser.username}</i>
 

@@ -62,7 +62,7 @@ def create_id_object_mapping():
     return id_object_mapping
 
 
-def scrape_neetcode_videos(playlist_url):
+def scrape_neetcode_videos(playlist_urls):
     pattern = re.compile(r".*Leetcode\s+(\d+).*", re.IGNORECASE)
 
     options = {
@@ -70,31 +70,36 @@ def scrape_neetcode_videos(playlist_url):
         "quiet": True,
     }
 
+    neetcode_videos = []
     with youtube_dl.YoutubeDL(options) as ydl:
-        playlist_dict = ydl.extract_info(playlist_url, download=False)
-        neetcode_videos = []
+        for playlist_url in playlist_urls:
+            playlist_dict = ydl.extract_info(playlist_url, download=False)
 
-        for video in playlist_dict["entries"]:
-            title = video["title"]
-            match = pattern.match(title)
-            if match:
-                leetcode_number = match.group(1)
-                video_link = video["url"]
-                neetcode_videos.append(
-                    {"leetcode_number": leetcode_number, "video_link": video_link}
-                )
+            for video in playlist_dict["entries"]:
+                title = video["title"]
+                match = pattern.match(title)
+                if match:
+                    leetcode_number = match.group(1)
+                    video_link = video["url"]
+
+                    neetcode_videos.append(
+                        {"leetcode_number": leetcode_number, "video_link": video_link}
+                    )
 
         return neetcode_videos
 
 
-playlist_url = (
-    "https://www.youtube.com/playlist?list=PLot-Xpze53leF0FeHz2X0aG3zd0mr1AW_"
-)
+playlist_urls = [
+    "https://www.youtube.com/playlist?list=PLot-Xpze53leF0FeHz2X0aG3zd0mr1AW_",
+    "https://www.youtube.com/playlist?list=PLQpVsaqBj4RLwXMZ9LaAFf4rVowiC3ZcG",
+    "https://www.youtube.com/playlist?list=PLQpVsaqBj4RI3jgIzqK7VJHy8Esacg-ow",
+    "https://www.youtube.com/playlist?list=PLQpVsaqBj4RIJdYW6Y-iAswxCZeocfoRW",
+]
 
 questions = create_id_object_mapping()
 final_data = []
 
-neetcode_videos = scrape_neetcode_videos(playlist_url)
+neetcode_videos = scrape_neetcode_videos(playlist_urls)
 if neetcode_videos:
     for video in neetcode_videos:
         leetcode_number = video["leetcode_number"]
