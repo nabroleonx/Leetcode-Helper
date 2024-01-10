@@ -1,6 +1,7 @@
 import { Telegraf, Scenes, session } from "telegraf";
 import { message } from "telegraf/filters";
 import dotenv from "dotenv";
+import { telegrafThrottler } from "telegraf-throttler";
 
 // import User from "./models/users";
 import { getUserInfo } from "./models/users/statics.js";
@@ -52,6 +53,9 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const stage = new Scenes.Stage([usernameScene, quizScene]);
 bot.use(session());
 bot.use(stage.middleware());
+
+const throttler = telegrafThrottler({});
+bot.use(throttler);
 
 bot.telegram.setMyCommands([
   { command: "/start", description: "start the bot" },
