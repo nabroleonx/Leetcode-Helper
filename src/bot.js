@@ -7,6 +7,7 @@ import { getUserInfo } from "./models/users/statics.js";
 import {
   createQuestionPaginationKeyboard,
   getDailyQuestion,
+  getProblemWithSlug,
   getProblemsList,
   getRandomQuestion,
 } from "./controllers/questions.js";
@@ -384,6 +385,41 @@ bot.hears(/\/quiz_(.+)/, async (ctx) => {
     ctx.session.currentQuestionIndex = 0;
     ctx.session.score = 0;
     ctx.scene.enter("quiz_scene");
+  }
+});
+
+/**
+ * Takes question slug and starts the selected question with solution
+ */
+bot.hears(/\/q_(.+)/, async (ctx) => {
+  try {
+    const [, slug] = ctx.match;
+
+    const selectedQuestion = await withRetries(async () => {
+      return await getProblemWithSlug(slug);
+    });
+
+    await ctx.replyWithHTML(selectedQuestion.message, {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "Check question detail",
+              web_app: { url: selectedQuestion.url },
+            },
+          ],
+          [
+            {
+              text: "Check solution",
+              web_app: { url: selectedQuestion.solutionUrl },
+            },
+          ],
+          ...selectedQuestion.neetcodeSolutions,
+        ],
+      },
+    });
+  } catch (error) {
+    console.error("Failed to process get question with slug\n" + error);
   }
 });
 

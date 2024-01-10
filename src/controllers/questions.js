@@ -59,6 +59,7 @@ const getQuestionInfo = async (question) => {
     tags: questionTags.join(", "),
     difficulty: diffColor + " " + questionDifficulty,
     url: questionUrl,
+    titleSlug: question.titleSlug,
     solutionUrl,
     neetcodeSolutions: [...(neetcodeSolutions && neetcodeSolutions)],
   };
@@ -98,20 +99,24 @@ export async function getProblemsList(page) {
       offset: (+page - 1) * 10,
     });
 
-    const questions = problems.questions.map((question) => {
-      return getQuestionInfo(question);
-    });
+    const questions = await Promise.all(
+      problems.questions.map(async (question) => {
+        const data = await getQuestionInfo(question);
+        return data;
+      })
+    );
 
     const message = questions
       .map((problem) => {
-        const msg = `
-        ${problem.difficulty}
-        \n<b><a href="${problem.url}">${problem.title}</a></b>
-        \n<i>Tags: </i><i><span class="tg-spoiler">${problem.tags}</span></i>
-        `;
+        const msg = `${problem.difficulty}\n<b><a href="${problem.url}">${
+          problem.title
+        }</a></b>\n<i>Tags: </i><i><span class="tg-spoiler">${
+          problem.tags
+        }</span></i>
+<i>/q_${problem.titleSlug.replace(new RegExp("-", "g"), "_")}</i>`;
         return msg;
       })
-      .join("\n");
+      .join("\n\n");
 
     return { message, totalPages: Math.ceil(problems.total / 10) };
   } catch (error) {
@@ -124,7 +129,23 @@ export async function getProblemWithSlug(slug) {
   try {
     const leetcode = new LeetCode();
 
-    const problem = await leetcode.problem(slug);
+    const problem = await leetcode.problem(
+      slug.replace(new RegExp("_", "g"), "-")
+    );
+
+    const data = await getQuestionInfo(problem);
+
+    const message = `
+    <b>${data.title}</b>
+    \n<b>Topic:</b> <i><span class="tg-spoiler">${data.tags}</span></i>
+    \n<b>Difficulty:</b> ${data.difficulty}`;
+
+    return {
+      message,
+      url: data.url,
+      solutionUrl: data.solutionUrl,
+      neetcodeSolutions: data.neetcodeSolutions,
+    };
   } catch (error) {}
 }
 
