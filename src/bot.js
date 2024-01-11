@@ -1,4 +1,4 @@
-import { Telegraf, Scenes, session } from "telegraf";
+import { Telegraf, Scenes, session, Markup } from "telegraf";
 import { message } from "telegraf/filters";
 import dotenv from "dotenv";
 import { telegrafThrottler } from "telegraf-throttler";
@@ -20,7 +20,12 @@ import {
   resourceTypeInlineKeyboard,
 } from "./controllers/resources.js";
 import Resource from "./models/resource/index.js";
-import { quizScene, setTimeScene, usernameScene } from "./scenes.js";
+import {
+  quizScene,
+  setTimeScene,
+  usernameScene,
+  feedbackScene,
+} from "./scenes/index.js";
 import Quiz from "./models/quizzes/index.js";
 import createQuizPaginationKeyboard, {
   getQuizzes,
@@ -30,9 +35,22 @@ import { formatBytes } from "./helpers/utils.js";
 dotenv.config();
 
 const welcome = (name) => `
-Ola ${name}, How you doing, It's nice to see that you are taking control of your DSA journey.
+Hello ${name}! 😊 Welcome to Leetcode Helper, your trusted companion in the world of Data Structures and Algorithms.
 
-Use /help command to see all the available actions.
+🚀 <b>Features:</b>
+- Get daily Leetcode challenges.
+- Take quizzes on specific topics.
+- Set a preferred time for daily challenge notifications.
+- Compare your Leetcode progress with others.
+
+🤖 <b>How to get started:</b>
+1. Use /help command to see all available actions.
+2. Set your preferred daily challenge notification time using /settime.
+3. Start a quiz with /quiz to test your knowledge.
+
+Stay consistent and enjoy your coding journey! 🌟
+
+This bot is highly inspired by <a href="https://a2sv.org">A2SV</a> and was built to help A2SVians stay consistent
 `;
 
 const help = `
@@ -51,7 +69,12 @@ const help = `
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-const stage = new Scenes.Stage([usernameScene, quizScene, setTimeScene]);
+const stage = new Scenes.Stage([
+  usernameScene,
+  quizScene,
+  setTimeScene,
+  feedbackScene,
+]);
 bot.use(session());
 bot.use(stage.middleware());
 
@@ -93,7 +116,24 @@ bot.telegram.setMyCommands([
   },
 ]);
 
-bot.start((ctx) => ctx.reply(welcome(ctx.from.first_name)));
+bot.start((ctx) => {
+  ctx.replyWithHTML(
+    welcome(ctx.from.first_name),
+    Markup.keyboard([
+      [
+        Markup.button.callback("🛠️ Settings", "🛠️ Settings"),
+        Markup.button.callback("ℹ️ About A2SV", "ℹ️ About A2SV"),
+      ],
+      [
+        Markup.button.callback("🌐 Invite", "🌐 Invite"),
+        Markup.button.callback("📩 Feedback", "📩 Feedback"),
+      ],
+    ])
+      .persistent()
+      .resize()
+      .oneTime()
+  );
+});
 
 bot.help((ctx) => ctx.replyWithHTML(help));
 
@@ -330,6 +370,97 @@ bot.action(/^(book|lectureSlide)$/, async (ctx) => {
 
   ctx.session.resourceListMessageId = msg.message_id;
   ctx.session.currentPage = 1;
+});
+
+bot.hears("🛠️ Settings", (ctx) => {
+  ctx.reply(
+    `Hello ${ctx.from.first_name}, Here in your settings you can
+    - Set your leetcode username
+    - Configure a time to get daily leetcode solutions at
+    `,
+    Markup.inlineKeyboard([
+      Markup.button.callback("Set/Update Username", "setusername"),
+      Markup.button.callback("Question Notification", "settime"),
+    ]).resize()
+  );
+});
+
+const caption = `
+<b>Africa to Silicon Valley (A2SV):</b>
+
+<b>Mission:</b>
+Bridging the tech talent gap in Africa, A2SV upskills high-potential university students, connects them with global opportunities, and develops digital solutions for local challenges.
+
+<b>Achievements:</b>
+- Trained 650+ students in Ethiopia, Ghana, and beyond. 🌍
+- Connected students with top tech companies like Google, Meta, and Palantir. 🔗
+- Launched innovative social projects, addressing maternal health, language AI, volunteer management, rental markets, food information, and self-learning platforms. 🚀
+
+<b>Expansion:</b>
+- Expanded education to Ghana, fostering local talent and conducting remote sessions.
+- Established an African Headquarters in Ethiopia. 🌍
+
+<b>Problem and Approach:</b>
+Addressing the global tech talent shortage, A2SV focuses on multidisciplinary education, industry connections, and local tech solutions.
+Committed to providing free education, empowering students to make a meaningful impact. ✊`;
+
+bot.hears("ℹ️ About A2SV", (ctx) => {
+  ctx.replyWithPhoto(
+    "https://res.cloudinary.com/eskalate/image/upload/bg_img",
+    {
+      caption,
+      parse_mode: "HTML",
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "Learn more about A2SV",
+              url: "https://a2sv.org",
+            },
+          ],
+        ],
+      },
+    }
+  );
+});
+
+bot.hears("📩 Feedback", (ctx) => {
+  ctx.scene.enter("feedbackScene");
+});
+
+const inviteMessage = (userId) => `
+Leetcode helper is the companion you need to stay consistent.
+
+Join now 👇🏾
+https://t.me/leetcode_helper_bot?start=referral_code_${userId}
+`;
+
+bot.hears("🌐 Invite", (ctx) => {
+  ctx.reply(
+    `Use leetcode helper to stay consistent\nJoin using this link below 👇🏾
+    \nhttps://t.me/leetcode_helper_bot?start=referral_code_${ctx.from.id}
+    \nIn the near future we will add a feature to give rewards for each invite.`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "Share",
+              url: `https://t.me/share/url?url=${inviteMessage(ctx.from.id)}`,
+            },
+          ],
+        ],
+      },
+    }
+  );
+});
+
+bot.action("setusername", (ctx) => {
+  ctx.scene.enter("username_scene");
+});
+
+bot.action("settime", (ctx) => {
+  ctx.scene.enter("setTimeScene");
 });
 
 /**

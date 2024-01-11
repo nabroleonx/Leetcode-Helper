@@ -1,60 +1,7 @@
 import { Scenes } from "telegraf";
-import User from "./models/users/index.js";
-import moment from "moment-timezone";
 
 const baseYoutubeUrl = "https://www.youtube.com/watch?v=";
 const leetcodeUrl = "https://www.leetcode.com/problems/";
-
-/**
- * Scene for collecting LeetCode username from the user and storing it in the database.
- */
-const usernameScene = new Scenes.BaseScene("username_scene");
-
-usernameScene.enter(async (ctx) => {
-  const existingUser = await User.findOne({ user_id: ctx.from.id });
-
-  if (existingUser && existingUser.leetcode_username) {
-    await ctx.reply(
-      `Your current LeetCode username is "${existingUser.leetcode_username}". \n\nDo you want to update it? if you don't send 'no', \notherwise send your new username`
-    );
-    return;
-  }
-  await ctx.reply("Please enter your LeetCode username:");
-});
-
-usernameScene.on("message", async (ctx) => {
-  const username = ctx.message.text.toLowerCase();
-
-  const existingUser = await User.findOne({ user_id: ctx.from.id });
-
-  if (existingUser && existingUser.leetcode_username) {
-    const confirmation = ctx.message.text.toLowerCase();
-    if (confirmation.toLowerCase() !== "no") {
-      try {
-        existingUser.leetcode_username = username;
-        await existingUser.save();
-        await ctx.reply(`Your username has been updated to "${username}".`);
-      } catch (err) {
-        console.error(err);
-        await ctx.reply("Error occurred while updating your username.");
-      }
-    } else {
-      await ctx.reply("Your current LeetCode username remains unchanged.");
-    }
-  } else {
-    try {
-      await User.create({ user_id: ctx.from.id, leetcode_username: username });
-      await ctx.reply(
-        `Your username "${username}" has been saved. \nCheck /user_info for your LeetCode info\n\nP.S. You can also use /settime to set your preferred time to get leetcode daily challenges.`
-      );
-    } catch (err) {
-      console.error(err);
-      await ctx.reply("Error occurred while saving your username.");
-    }
-  }
-
-  return ctx.scene.leave();
-});
 
 /**
  * Scene for handling quizzes.
@@ -149,41 +96,4 @@ quizScene.on("message", async (ctx) => {
   }
 });
 
-/**
- * A scene to set preferred time to get notified
- */
-const setTimeScene = new Scenes.BaseScene("setTimeScene");
-
-setTimeScene.enter((ctx) => {
-  ctx.reply(
-    "You can set your preffered time to get notified about Leetcode daily challenge.\n\nPlease set your preferred time in 12-hour format (HH:MM AM/PM)\n\ne.g. <code>9:30 PM</code>",
-    {
-      parse_mode: "HTML",
-    }
-  );
-});
-
-setTimeScene.on("message", async (ctx) => {
-  const { text } = ctx.message;
-  const timeRegex = /^(0?[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/i;
-
-  if (timeRegex.test(text)) {
-    const user_id = ctx.message.from.id;
-
-    const userTime = moment(text, "hh:mm A");
-    const eatTime = userTime.tz("Africa/Addis_Ababa").format("HH:mm");
-
-    await User.findOneAndUpdate(
-      { user_id },
-      { cron_time: eatTime },
-      { upsert: true, new: true }
-    );
-
-    ctx.reply("Your preferred time has been set successfully!");
-    ctx.scene.leave();
-  } else {
-    ctx.reply("Please enter a valid time in HH:MM AM/PM format.");
-  }
-});
-
-export { usernameScene, quizScene, setTimeScene };
+export default quizScene;
