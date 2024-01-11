@@ -73,8 +73,7 @@ export async function getDailyQuestion() {
 
     const data = await getQuestionInfo(dailyQuestion.question);
 
-    const message = `
-    <b>${data.title}</b>
+    const message = `<b>${data.title}</b>
     \n<b>Topic:</b> <i><span class="tg-spoiler">${data.tags}</span></i>
     \n<b>Difficulty:</b> ${data.difficulty}`;
 

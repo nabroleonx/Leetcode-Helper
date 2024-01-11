@@ -20,7 +20,7 @@ import {
   resourceTypeInlineKeyboard,
 } from "./controllers/resources.js";
 import Resource from "./models/resource/index.js";
-import { quizScene, usernameScene } from "./scenes.js";
+import { quizScene, setTimeScene, usernameScene } from "./scenes.js";
 import Quiz from "./models/quizzes/index.js";
 import createQuizPaginationKeyboard, {
   getQuizzes,
@@ -46,11 +46,12 @@ const help = `
 /resources - Get DSA resources
 /quiz - Get Quizzes on different leetcode questions
 /roadmap - Handpicked roadmaps/resources
+/settime - Set preferred time to get notified about daily leetcode challenge
 `;
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-const stage = new Scenes.Stage([usernameScene, quizScene]);
+const stage = new Scenes.Stage([usernameScene, quizScene, setTimeScene]);
 bot.use(session());
 bot.use(stage.middleware());
 
@@ -84,6 +85,11 @@ bot.telegram.setMyCommands([
   {
     command: "/roadmap",
     description: "Handpicked roadmaps/resources",
+  },
+  {
+    command: "/settime",
+    description:
+      "Set preferred time to get notified about daily leetcode challenge",
   },
 ]);
 
@@ -280,6 +286,10 @@ bot.command("roadmap", (ctx) => {
   } catch (error) {
     console.error("Failed to process command /set_username\n" + error);
   }
+});
+
+bot.command("settime", (ctx) => {
+  ctx.scene.enter("setTimeScene");
 });
 
 bot.action(/^(Books|Videos|Links)$/, async (ctx) => {

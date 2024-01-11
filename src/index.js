@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 
 import bot from "./bot.js";
 import DBConnect from "./config/db.js";
+import { startCronService } from "./controllers/cron.js";
 // import User from "./models/users";
 
 dotenv.config();
@@ -21,7 +22,11 @@ const startBot = async () => {
   console.log("Starting app...");
 
   await DBConnect()
-    .then(bot.launch().then(() => console.log("Bot started")))
+    .then(() => {
+      bot.launch();
+      console.log("Bot started");
+      startCronService();
+    })
     .catch((error) => "Bot failed to launch:" + error);
 };
 
